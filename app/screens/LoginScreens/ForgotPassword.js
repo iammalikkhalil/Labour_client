@@ -115,7 +115,8 @@ export default function ForgotPassword() {
         <Text> </Text>
         <Btn
           text="Send Code"
-          width="93%"
+          width="100%"
+          containerStyle={{ marginLeft: 0 }}
           onPress={() => {
             let emailFlag = validateEmail({ e: email, error: setEmailError });
             if (emailFlag) {

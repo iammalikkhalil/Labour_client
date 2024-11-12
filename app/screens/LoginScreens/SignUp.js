@@ -2,8 +2,7 @@ import React, { useState } from "react";
 import { StyleSheet, View, Text, ScrollView, Alert } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useDispatch } from "react-redux";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Btn, ImageBtn, Input } from "../../components";
+import { Btn, CustomDropdown, ImageBtn, Input } from "../../components";
 import {
   validateFullName,
   validateEmail,
@@ -12,7 +11,7 @@ import {
 } from "../../utils/validations";
 import Loading from "../../modal/loading";
 import { useTheme } from "../../../assets/colors/ThemeContext";
-import { login } from "../../reducers/UserSlice"; // Import login action
+// import { Dropdown } from "react-native-element-dropdown";
 
 import axios from "axios";
 import { BASE_URL } from "@env"; // Import BASE_URL from environment variables
@@ -31,6 +30,13 @@ export default function SignUp() {
   const [passwordError, setPasswordError] = useState("");
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const [role, setRole] = useState(null);
+
+  const roleOptions = [
+    { label: "Client", value: "client" },
+    { label: "Service Provider", value: "service_provider" },
+  ];
 
   // Handle input changes with validation
   const handleFullNameChange = (e) => {
@@ -109,11 +115,11 @@ export default function SignUp() {
           );
         }
       } catch (error) {
-        console.error("Sign-up error:", error.response?.data || error.message);
+        console.error("Sign-up error:", error.response?.roles || error.message);
 
         Alert.alert(
           "Registration Failed",
-          error.response?.data?.message ||
+          error.response?.roles?.message ||
             "An error occurred during registration. Please try again later."
         );
       }
@@ -182,7 +188,19 @@ export default function SignUp() {
         containerStyle={{ marginHorizontal: 15 }}
         secureTextEntry
       />
-      <Btn text="Agree and Register" width="93%" onPress={handleSignUp} />
+
+      <CustomDropdown
+        data={roleOptions}
+        selectedValue={role}
+        setSelectedValue={setRole}
+      />
+
+      <Btn
+        text="Agree and Register"
+        width="93%"
+        containerStyle={{ marginTop: 10, marginLeft: 13 }}
+        onPress={handleSignUp}
+      />
     </ScrollView>
   );
 }

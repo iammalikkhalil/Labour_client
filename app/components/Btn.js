@@ -4,7 +4,7 @@ import { useTheme } from "../../assets/colors/ThemeContext"; // Adjust the impor
 export default function Btn({
   backgroundColor,
   borderColor,
-  width = "90%",
+  width = "93%",
   borderRadius = 6,
   color,
   fontFamily = "Regular",

@@ -53,8 +53,7 @@ export default function OtpScreen(props) {
           Alert.alert("Success", "OTP verified successfully!", [
             {
               text: "OK",
-              onPress: () =>
-                navigation.replace("Welcome", { username: "user" }),
+              onPress: () => navigation.replace("Login"),
             },
           ]);
         }
@@ -142,7 +141,7 @@ export default function OtpScreen(props) {
         <Text> </Text>
         <Btn
           text="Verify"
-          width="93%"
+          width="100%"
           onPress={() => {
             if (validateOTP({ e: otp, error: setOtpError })) {
               verifyOtp();

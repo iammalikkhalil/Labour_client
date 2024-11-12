@@ -120,6 +120,7 @@ export default function ResetPassword(props) {
         <Btn
           text="Reset Password"
           width="93%"
+          containerStyle={{ marginLeft: 13 }}
           onPress={() => {
             let passwordFlag = validatePassword({
               e: password,

@@ -67,6 +67,8 @@ export default function Login() {
         if (response.status === 200) {
           const { user } = response.data;
 
+          console.log("user: ", user);
+
           // Save user data to AsyncStorage
           await AsyncStorage.setItem("user", JSON.stringify(user));
 
@@ -147,7 +149,12 @@ export default function Login() {
         </Text>
       </TouchableOpacity>
 
-      <Btn text="Login" width="93%" onPress={handleLogin} />
+      <Btn
+        text="Login"
+        width="93%"
+        containerStyle={{ marginHorizontal: 10 }}
+        onPress={handleLogin}
+      />
 
       <TouchableOpacity
         onPress={() => navigation.navigate("SignUp")}

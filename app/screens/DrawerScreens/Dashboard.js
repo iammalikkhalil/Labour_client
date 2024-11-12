@@ -23,9 +23,9 @@ export default function Dashboard() {
         />
       ) : (
         <>
-          <Chart title="Deliveries Out" subtitle="Monthly" />
-          <Chart title="Daily Performance " subtitle="Product Statistics" />
-          <Chart title="Cancelled  Orders" subtitle=" Monthly" />
+          {/* <Chart title="Deliveries Out" subtitle="Monthly" /> */}
+          {/* <Chart title="Daily Performance " subtitle="Product Statistics" /> */}
+          {/* <Chart title="Cancelled  Orders" subtitle=" Monthly" /> */}
         </>
       )}
     </ScrollView>
