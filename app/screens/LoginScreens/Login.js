@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { StyleSheet, View, Text, TouchableOpacity } from "react-native";
+import { StyleSheet, View, Text, TouchableOpacity, Alert } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Btn, Input } from "../../components";
 import { validateEmail, validatePassword } from "../../utils/validations";
@@ -38,8 +38,6 @@ export default function Login() {
   const handleLogin = async () => {
     setLoading(true);
 
-    console.log(`url: ${BASE_URL}/auth/login`);
-
     // Trim inputs when form is submitted
     const trimmedEmail = email.trim();
     const trimmedPassword = password.trim();
@@ -53,12 +51,19 @@ export default function Login() {
 
     if (emailFlag && passwordFlag) {
       try {
-        const response = await axios.post(`${BASE_URL}/auth/login`, {
-          email: trimmedEmail,
-          password: trimmedPassword,
-        });
+        const response = await axios.post(
+          `${BASE_URL}/auth/login`,
+          {
+            email: trimmedEmail,
+            password: trimmedPassword,
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
-        // Check if the response status is 200 (optional, as axios handles this by default)
         if (response.status === 200) {
           const { user } = response.data;
 
@@ -68,15 +73,39 @@ export default function Login() {
           // Dispatch login action to save user data to Redux store
           dispatch(login(user));
 
-          // Navigate to Welcome screen after successful login
-          navigation.replace("Welcome");
+          // Display success alert
+          Alert.alert("Login Successful", "Welcome back!", [
+            { text: "OK", onPress: () => navigation.replace("Welcome") },
+          ]);
         }
       } catch (error) {
-        console.error(
-          "Login error:",
-          error.response?.data?.message || error.message
-        );
+        console.error("Login error:", error.response?.data || error.message);
+
+        // Check if the error is due to unverified email (403 status code)
+        if (error.response?.status === 403) {
+          Alert.alert(
+            "Account Not Verified",
+            "Your account is not verified. Please check your email for the verification link.",
+            [
+              {
+                text: "OK",
+                onPress: () =>
+                  navigation.navigate("OtpScreen", { action: "verify", email }),
+              },
+            ]
+          );
+        } else {
+          // Display general login error alert
+          Alert.alert(
+            "Login Failed",
+            error.response?.data?.message ||
+              "Unauthorized. Please check your credentials or try again later."
+          );
+        }
       }
+    } else {
+      // If validation fails, show an alert to notify the user
+      Alert.alert("Invalid Input", "Please check your email and password.");
     }
     setLoading(false);
   };

@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import { StyleSheet, View, Text, ScrollView } from "react-native";
+import { StyleSheet, View, Text, ScrollView, Alert } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useDispatch } from "react-redux";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Btn, ImageBtn, Input } from "../../components";
 import {
-  validateUsername,
+  validateFullName,
   validateEmail,
   validatePassword,
   validateConfirmPassword,
@@ -14,14 +14,17 @@ import Loading from "../../modal/loading";
 import { useTheme } from "../../../assets/colors/ThemeContext";
 import { login } from "../../reducers/UserSlice"; // Import login action
 
+import axios from "axios";
+import { BASE_URL } from "@env"; // Import BASE_URL from environment variables
+
 export default function SignUp() {
   const navigation = useNavigation();
   const { theme } = useTheme();
   const dispatch = useDispatch();
 
-  const [username, setUsername] = useState("");
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
-  const [usernameError, setUsernameError] = useState("");
+  const [fullNameError, setFullNameError] = useState("");
   const [emailError, setEmailError] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -29,9 +32,10 @@ export default function SignUp() {
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleUsernameChange = (e) => {
-    setUsername(e);
-    validateUsername({ e, error: setUsernameError });
+  // Handle input changes with validation
+  const handleFullNameChange = (e) => {
+    setFullName(e);
+    validateFullName({ e, error: setFullNameError });
   };
 
   const handleEmailChange = (e) => {
@@ -55,33 +59,67 @@ export default function SignUp() {
 
   const handleSignUp = async () => {
     setLoading(true);
-    let usernameFlag = validateUsername({
-      e: username,
-      error: setUsernameError,
+
+    // Validate input fields
+    const fullNameFlag = validateFullName({
+      e: fullName,
+      error: setFullNameError,
     });
-    let emailFlag = validateEmail({ e: email, error: setEmailError });
-    let passwordFlag = validatePassword({
+    const emailFlag = validateEmail({ e: email, error: setEmailError });
+    const passwordFlag = validatePassword({
       e: password,
       error: setPasswordError,
     });
-    let confirmPasswordFlag = validateConfirmPassword({
+    const confirmPasswordFlag = validateConfirmPassword({
       password,
       confirmPassword,
       error: setConfirmPasswordError,
     });
 
-    if (usernameFlag && emailFlag && passwordFlag && confirmPasswordFlag) {
-      const userData = { username, email }; // Create the user object
+    if (fullNameFlag && emailFlag && passwordFlag && confirmPasswordFlag) {
+      const userData = { name: fullName, email, password };
+
       try {
-        // Save to Redux
-        dispatch(login(userData));
-        // Save to AsyncStorage
-        await AsyncStorage.setItem("user", JSON.stringify(userData));
-        // Navigate to the Welcome screen
-        navigation.replace("Welcome");
+        const response = await axios.post(`${BASE_URL}/auth/signUp`, userData, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        console.log("Response:", response); // Log the entire response
+
+        if (response.status >= 200 && response.status < 300) {
+          // Display alert informing the user about email verification
+          Alert.alert(
+            "Registration Successful",
+            "A verification email has been sent to your email address. Please verify your account to continue.",
+            [
+              {
+                text: "OK",
+                onPress: () =>
+                  navigation.navigate("OtpScreen", { action: "verify", email }),
+              },
+            ]
+          );
+        } else {
+          console.error("Unexpected response status:", response.status);
+          Alert.alert(
+            "Registration Failed",
+            "Unexpected response from server."
+          );
+        }
       } catch (error) {
-        console.error("Error saving user data: ", error);
+        console.error("Sign-up error:", error.response?.data || error.message);
+
+        Alert.alert(
+          "Registration Failed",
+          error.response?.data?.message ||
+            "An error occurred during registration. Please try again later."
+        );
       }
+    } else {
+      // If validation fails, show an alert to notify the user
+      Alert.alert("Invalid Input", "Please correct the highlighted errors.");
     }
     setLoading(false);
   };
@@ -100,13 +138,13 @@ export default function SignUp() {
         onPress={() => navigation.goBack()}
       />
       <Text style={[styles.title, { color: theme.textPrimary }]}>
-        Welcome back! Glad to see you, Again!
+        Welcome! Create an account to get started.
       </Text>
       <Input
-        placeholder="Username"
-        value={username}
-        onChangeText={handleUsernameChange}
-        error={usernameError}
+        placeholder="Enter Full Name"
+        value={fullName}
+        onChangeText={handleFullNameChange}
+        error={fullNameError}
         labelFontFamily="Bold"
         fontFamily="Regular"
         inputContainerStyle={{ paddingVertical: 5 }}

@@ -1,24 +1,18 @@
 import React, { useState } from "react";
-import {
-  StyleSheet,
-  View,
-  Text,
-  Linking,
-  TouchableOpacity,
-  Image,
-} from "react-native";
+import { StyleSheet, View, Text, TouchableOpacity, Alert } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Btn, ImageBtn, Input } from "../../components";
 import { validateEmail } from "../../utils/validations";
 import Loading from "../../modal/loading";
 import { useTheme } from "../../../assets/colors/ThemeContext";
+import axios from "axios";
+import { BASE_URL } from "@env"; // Import BASE_URL from environment variables
 
 export default function ForgotPassword() {
   const { theme } = useTheme();
   const navigation = useNavigation();
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState("");
-
   const [loading, setLoading] = useState(false);
 
   const handleEmailChange = (e) => {
@@ -26,9 +20,73 @@ export default function ForgotPassword() {
     validateEmail({ e, error: setEmailError });
   };
 
+  // Function to handle "Send Code" for forgot password
+  const sendCode = async () => {
+    setLoading(true);
+
+    console.log(email);
+
+    try {
+      const response = await axios.post(`${BASE_URL}/auth/forgotPassword`, {
+        email,
+      });
+
+      if (response.status === 200) {
+        Alert.alert("Success", "An OTP has been sent to your email.");
+        // Navigate to the OTP screen with necessary parameters
+        navigation.navigate("OtpScreen", { action: "forget", email });
+      } else {
+        Alert.alert("Error", response.data.message || "Failed to send OTP.");
+      }
+    } catch (error) {
+      console.error("Forgot Password error:", error);
+
+      // Enhanced error handling based on response codes
+      if (error.response) {
+        const status = error.response.status;
+        const message = error.response.data.message;
+
+        // Custom messages for different statuses
+        if (status === 400) {
+          Alert.alert("Error", message || "Please enter a valid email.");
+        } else if (status === 404) {
+          Alert.alert(
+            "Error",
+            message || "User with this email does not exist."
+          );
+        } else if (status === 403) {
+          Alert.alert(
+            "Error",
+            message || "Email not verified. Please verify your email.",
+            [
+              {
+                text: "OK",
+                onPress: () =>
+                  navigation.navigate("OtpScreen", { action: "verify", email }),
+              },
+            ]
+          );
+        } else {
+          Alert.alert(
+            "Error",
+            message || "Failed to send OTP. Please try again."
+          );
+        }
+      } else {
+        // General network or server error
+        Alert.alert(
+          "Error",
+          "Network error. Please check your connection and try again."
+        );
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      {loading ? <Loading /> : null}
+      {loading && <Loading />}
 
       <View style={{ height: "85%" }}>
         <ImageBtn
@@ -47,28 +105,22 @@ export default function ForgotPassword() {
           your account.
         </Text>
         <Input
-          placeholder=" EnterEmail"
+          placeholder="Enter Email"
           value={email}
           onChangeText={handleEmailChange}
           error={emailError}
           labelFontFamily="Bold"
           fontFamily="Regular"
-          inputContainerStyle={{ paddingVertical: 5 }}
-          containerStyle={{ marginHorizontal: 15 }}
         />
         <Text> </Text>
         <Btn
           text="Send Code"
           width="93%"
           onPress={() => {
-            setLoading(true);
             let emailFlag = validateEmail({ e: email, error: setEmailError });
-            setTimeout(() => {
-              if (emailFlag) {
-                navigation.replace("OtpScreen");
-              }
-              setLoading(false);
-            }, 1000);
+            if (emailFlag) {
+              sendCode();
+            }
           }}
         />
       </View>
@@ -118,7 +170,6 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: "Regular",
     fontSize: 15,
-    // color: theme.textSecondary,
     marginHorizontal: 15,
     marginBottom: 50,
   },

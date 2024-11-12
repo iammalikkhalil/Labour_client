@@ -7,7 +7,6 @@ import { login } from "./reducers/UserSlice";
 
 import AppNavigator from "./navigation/AppNavigator";
 import { loadCartFromAsync } from "./reducers/CartSlice";
-// import { Toaster } from "sonner";
 
 export default function MyApp() {
   const dispatch = useDispatch();
@@ -46,7 +45,6 @@ export default function MyApp() {
   return (
     <View style={styles.container}>
       <AppNavigator />
-      {/* <Toaster /> */}
     </View>
   );
 }

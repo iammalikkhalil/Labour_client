@@ -1,30 +1,21 @@
 import React, { useState } from "react";
-import {
-  StyleSheet,
-  View,
-  Text,
-  Linking,
-  TouchableOpacity,
-  Image,
-} from "react-native";
+import { StyleSheet, View, Text, Alert, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Btn, ImageBtn, Input } from "../../components";
-
 import {
-  validateUsername,
-  validateEmail,
   validatePassword,
   validateConfirmPassword,
 } from "../../utils/validations";
-
 import Loading from "../../modal/loading";
-
 import { useTheme } from "../../../assets/colors/ThemeContext";
+import axios from "axios";
+import { BASE_URL } from "@env";
 
-export default function ResetPassword() {
+export default function ResetPassword(props) {
   const navigation = useNavigation();
   const { theme } = useTheme();
 
+  const email = props.route.params.email; // Get email from previous screen
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
@@ -43,6 +34,45 @@ export default function ResetPassword() {
       confirmPassword: e,
       error: setConfirmPasswordError,
     });
+  };
+
+  // Function to reset password
+  const resetPassword = async () => {
+    setLoading(true);
+
+    try {
+      const response = await axios.post(`${BASE_URL}/auth/resetPassword`, {
+        email,
+        newPassword: password,
+      });
+
+      if (response.status === 200) {
+        Alert.alert("Success", "Your password has been reset successfully!", [
+          {
+            text: "OK",
+            onPress: () => navigation.replace("PasswordChanged"),
+          },
+        ]);
+      } else {
+        Alert.alert(
+          "Error",
+          response.data.message || "Failed to reset password."
+        );
+      }
+    } catch (error) {
+      console.error("Reset Password error:", error);
+
+      if (error.response) {
+        Alert.alert(
+          "Error",
+          error.response.data.message || "Failed to reset password."
+        );
+      } else {
+        Alert.alert("Error", "An error occurred. Please try again later.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -91,7 +121,6 @@ export default function ResetPassword() {
           text="Reset Password"
           width="93%"
           onPress={() => {
-            setLoading(true);
             let passwordFlag = validatePassword({
               e: password,
               error: setPasswordError,
@@ -102,12 +131,9 @@ export default function ResetPassword() {
               error: setConfirmPasswordError,
             });
 
-            setTimeout(() => {
-              if (passwordFlag && confirmPasswordFlag) {
-                navigation.replace("PasswordChanged");
-              }
-              setLoading(false);
-            }, 1000);
+            if (passwordFlag && confirmPasswordFlag) {
+              resetPassword();
+            }
           }}
         />
       </View>
